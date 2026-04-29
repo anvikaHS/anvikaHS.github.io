@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quick Feed — CTA Framework</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0c0c0e; --surface: #141416; --surface2: #1c1c1f;
+  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.13);
+  --text: #f0ede8; --muted: #888580; --muted2: #555250;
+  --accent: #c8f064; --accent2: #7c6fff; --warn: #ff7b54;
+  --teal: #4ecdc4; --gold: #f4c842; --green: #3ddc97;
+  --purple-bg: rgba(124,111,255,.07); --purple-border: rgba(124,111,255,.35); --purple-tag: #9d93ff;
+  --show-bg: rgba(255,180,60,.07); --show-border: rgba(255,180,60,.38); --show-tag: #ffb83c;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;height:56px;
+  background:rgba(12,12,14,0.9);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+.nav-logo span{color:var(--accent)}
+.nav-tabs{display:flex;gap:2px}
+.nav-tab{padding:6px 16px;border-radius:6px;font-size:12px;font-weight:500;color:var(--muted);background:transparent;border:none;cursor:pointer;transition:all .18s}
+.nav-tab:hover{color:var(--text);background:var(--surface2)}
+.nav-tab.active{color:var(--bg);background:var(--accent)}
+.nav-badge{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);padding:4px 10px;border:1px solid var(--border);border-radius:20px}
+
+.panel{display:none;padding-top:56px;min-height:100vh}
+.panel.active{display:block}
+
+/* ── FLOWCHART ── */
+.flow-header{padding:40px 48px 28px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:32px}
+.flow-header-left{}
+.flow-eyebrow{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.15em;color:var(--accent);text-transform:uppercase;margin-bottom:10px}
+.flow-title{font-family:'Fraunces',serif;font-weight:400;font-size:26px;line-height:1.2;color:var(--text);letter-spacing:-0.01em;margin-bottom:6px}
+.flow-sub{font-family:'Manrope',sans-serif;font-weight:300;font-size:13px;color:var(--muted);line-height:1.6;max-width:480px}
+.flow-legend{display:flex;gap:12px;align-items:center;flex-shrink:0;margin-top:4px}
+.legend-item{display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.legend-dot{width:8px;height:8px;border-radius:2px}
+
+.flow-canvas{padding:40px 48px 80px;overflow-x:auto}
+.tree-wrap{padding:4px;min-width:max-content}
+
+/* Node base */
+.node-box{
+  padding:11px 15px;border-radius:8px;
+  border:1px solid var(--border);background:var(--surface);
+  cursor:pointer;transition:all .18s;
+  min-width:164px;max-width:240px;position:relative;
+}
+.node-box:hover{border-color:var(--border2);background:var(--surface2)}
+.node-box.has-ch::after{content:'›';position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--muted2);font-size:16px;transition:transform .2s}
+.node-box.has-ch.open::after{transform:translateY(-50%) rotate(90deg)}
+
+.node-box.start-node{background:var(--text);border-color:var(--text);cursor:default;min-width:140px}
+.node-box.start-node .n-title{color:var(--bg)}
+
+.node-box.decision{border-color:rgba(124,111,255,.35);background:rgba(124,111,255,.07)}
+.node-box.decision:hover,.node-box.decision.open{border-color:var(--accent2)}
+
+/* No-CTA — prominent grey solid */
+.node-box.outcome-nocta{border:1px solid var(--border2);background:var(--surface2);cursor:default}
+.node-box.outcome-sub{border-color:rgba(244,200,66,.35);background:rgba(244,200,66,.07);cursor:default}
+.node-box.outcome-good{border-color:rgba(61,220,151,.3);background:rgba(61,220,151,.06);cursor:default}
+
+/* Movie + Sports = same purple family as decision nodes */
+.node-box.movie{border-color:var(--purple-border);background:var(--purple-bg);cursor:pointer}
+.node-box.movie:hover,.node-box.movie.open{border-color:var(--accent2)}
+.node-box.sports{border-color:var(--purple-border);background:var(--purple-bg);cursor:pointer}
+.node-box.sports:hover,.node-box.sports.open{border-color:var(--accent2)}
+/* Shows = warm amber — the complex track */
+.node-box.show{border-color:var(--show-border);background:var(--show-bg);cursor:pointer;position:relative}
+.node-box.show:hover,.node-box.show.open{border-color:var(--show-tag)}
+
+/* Outcome leaves */
+.movie-leaf{border-color:rgba(61,220,151,.3);background:rgba(61,220,151,.06);cursor:default}
+.sports-leaf{border-color:rgba(61,220,151,.3);background:rgba(61,220,151,.06);cursor:default}
+.show-leaf{border-color:var(--show-border);background:var(--show-bg);cursor:default}
+
+/* Show complexity badge — communicates this track has nuance */
+.node-box.show::before{
+  content:'complex track';
+  position:absolute;top:-10px;right:8px;
+  font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.08em;
+  color:var(--show-tag);background:var(--bg);
+  padding:1px 6px;border-radius:3px;
+  border:1px solid var(--show-border);
+  text-transform:uppercase;
+}
+
+.n-tag{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
+.decision .n-tag{color:var(--accent2)}
+.outcome-good .n-tag{color:var(--green)}
+.outcome-sub .n-tag{color:var(--gold)}
+.outcome-nocta .n-tag{color:var(--muted2)}
+.movie .n-tag{color:var(--purple-tag)}
+.sports .n-tag{color:var(--purple-tag)}
+.movie-leaf .n-tag,.sports-leaf .n-tag{color:var(--green)}
+.show .n-tag,.show-leaf .n-tag{color:var(--show-tag)}
+
+.n-title{font-size:12px;font-weight:500;color:var(--text);line-height:1.35}
+.n-meta{font-size:10px;color:var(--muted2);margin-top:1px;margin-bottom:2px;font-weight:300;font-style:italic}
+.n-sub{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.4;font-weight:300}
+
+.cta-label{display:inline-block;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;padding:3px 8px;border-radius:4px;margin-top:5px;margin-right:4px}
+.cta-green{background:rgba(61,220,151,.15);color:var(--green);border:1px solid rgba(61,220,151,.3)}
+.cta-gold{background:rgba(244,200,66,.12);color:var(--gold);border:1px solid rgba(244,200,66,.3)}
+.cta-muted{background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--border2)}
+.cta-none{border:1px solid var(--border2);color:var(--muted2)}
+.cta-movie{background:rgba(61,220,151,.15);color:var(--green);border:1px solid rgba(61,220,151,.3)}
+.cta-sports{background:rgba(61,220,151,.15);color:var(--green);border:1px solid rgba(61,220,151,.3)}
+.cta-show{background:rgba(255,180,60,.12);color:var(--show-tag);border:1px solid rgba(255,180,60,.3)}
+
+.org-node-wrap{display:flex;align-items:flex-start}
+
+/* ── SIMULATOR ── */
+.sim-wrap{display:grid;grid-template-columns:280px 1fr 240px;min-height:calc(100vh - 56px)}
+.sim-left{border-right:1px solid var(--border);padding:28px 20px;overflow-y:auto;position:sticky;top:56px;height:calc(100vh - 56px)}
+.sim-section-head{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.12em;color:var(--muted2);text-transform:uppercase;margin-bottom:10px;margin-top:24px}
+.sim-section-head:first-child{margin-top:0}
+
+.scenario-chip{display:block;width:100%;text-align:left;padding:9px 12px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--muted);font-size:12px;cursor:pointer;transition:all .15s;margin-bottom:3px;line-height:1.4}
+.scenario-chip:hover{background:var(--surface2);color:var(--text)}
+.scenario-chip.active{background:var(--surface2);color:var(--text);border-color:var(--accent)}
+.scenario-chip .chip-tag{display:block;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);margin-bottom:2px;letter-spacing:.06em;text-transform:uppercase}
+.scenario-chip.active .chip-tag{color:var(--accent)}
+
+.control-group{margin-bottom:18px}
+.ctrl-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;display:block}
+.ctrl-opts{display:flex;flex-wrap:wrap;gap:4px}
+.ctrl-opt{padding:5px 10px;border-radius:5px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:11px;cursor:pointer;transition:all .15s}
+.ctrl-opt:hover{color:var(--text)}
+.ctrl-opt.active{background:rgba(200,240,100,.1);border-color:var(--accent);color:var(--accent)}
+
+.sim-mid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;padding:36px;overflow-y:auto;align-items:start}
+.phone-stage{display:flex;flex-direction:column;align-items:center;gap:16px}
+.phone-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase}
+.phone{width:208px;height:404px;background:#080810;border-radius:30px;border:6px solid #1f1f28;overflow:hidden;position:relative;box-shadow:0 0 0 1px rgba(255,255,255,.06),0 32px 72px rgba(0,0,0,.6)}
+.phone-video-bg{position:absolute;inset:0;background:linear-gradient(160deg,#1a1a3e 0%,#0d1a2e 45%,#1a0d1a 100%)}
+.phone-grain{position:absolute;inset:0;opacity:.04;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.phone-vignette{position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.92) 0%,rgba(0,0,0,.25) 40%,transparent 70%)}
+.phone-scene-lines{width:100%;position:absolute;top:30%;display:flex;flex-direction:column;gap:3px;padding:0 20px;opacity:.1}
+.phone-scene-line{height:2px;border-radius:2px;background:var(--text)}
+.phone-top-bar{position:absolute;top:0;left:0;right:0;padding:13px 13px 0;display:flex;align-items:center;justify-content:space-between}
+.phone-wayfind{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:4px 10px 4px 8px;max-width:158px}
+.phone-wayfind-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.phone-wayfind-text{font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phone-live-badge{display:none;background:rgba(255,60,60,.9);color:white;font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.06em;padding:3px 8px;border-radius:4px}
+.phone-live-badge.show{display:block}
+.phone-actions{position:absolute;right:11px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:14px;align-items:center}
+.phone-action-btn{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:13px}
+.phone-bottom{position:absolute;bottom:0;left:0;right:0;padding:14px 13px 18px}
+.phone-show-title{font-size:11px;font-weight:500;color:rgba(255,255,255,.9);margin-bottom:2px;line-height:1.3}
+.phone-ep-desc{font-size:9px;color:rgba(255,255,255,.4);margin-bottom:10px;line-height:1.5}
+.phone-ctas{display:flex;flex-direction:column;gap:5px}
+.phone-cta{width:100%;padding:8px 12px;border-radius:7px;border:none;font-size:11px;font-weight:500;text-align:center}
+.phone-cta.p-primary{background:var(--accent);color:#0c1a00}
+.phone-cta.p-secondary{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7)}
+.phone-cta.p-sub{background:var(--gold);color:#1a1000}
+.phone-cta.p-none{background:transparent;border:1px dashed rgba(255,255,255,.15);color:rgba(255,255,255,.3);font-style:italic;font-size:10px}
+.phone-alt-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:.08em;margin-top:4px;text-align:center}
+
+.sim-trail{padding:0 0 0 28px;border-left:1px solid var(--border)}
+.trail-head{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px}
+.trail-step{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border);opacity:.35}
+.trail-step.active,.trail-step.flagged{opacity:1}
+.trail-step-num{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);width:16px;flex-shrink:0;padding-top:2px}
+.trail-step.active .trail-step-num{color:var(--accent)}
+.trail-step.flagged .trail-step-num{color:var(--warn)}
+.trail-step-key{font-size:10px;color:var(--muted);margin-bottom:2px;font-weight:300}
+.trail-step-val{font-size:12px;font-weight:500;color:var(--muted2)}
+.trail-step.active .trail-step-val{color:var(--text)}
+.trail-step.flagged .trail-step-val{color:var(--warn)}
+.result-card{margin-top:14px;padding:14px;border-radius:8px;border:1px solid var(--border2);background:var(--surface)}
+.result-cta-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.result-primary{font-size:14px;font-weight:500;color:var(--accent);margin-bottom:2px}
+.result-secondary{font-size:11px;color:var(--muted);margin-bottom:8px}
+.result-dest{font-size:11px;color:var(--muted);line-height:1.55;font-weight:300}
+
+.sim-right{border-left:1px solid var(--border);padding:24px 20px;overflow-y:auto;position:sticky;top:56px;height:calc(100vh - 56px)}
+
+/* ── PRINCIPLES ── */
+#panel-doc{display:none}
+#panel-doc.active{display:flex;flex-direction:row}
+.doc-nav{
+  width:220px;flex-shrink:0;
+  position:sticky;top:56px;height:calc(100vh - 56px);
+  overflow-y:auto;
+  border-right:1px solid var(--border);
+  padding:36px 20px;
+  background:var(--bg);
+}
+.doc-nav-head{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px}
+.doc-nav-link{
+  display:block;padding:8px 12px;border-radius:6px;
+  font-family:'Manrope',sans-serif;font-weight:300;font-size:12px;
+  color:var(--muted);cursor:pointer;transition:all .15s;
+  margin-bottom:2px;line-height:1.4;border:1px solid transparent;
+}
+.doc-nav-link:hover{color:var(--text);background:var(--surface2)}
+.doc-nav-link.active{color:var(--text);background:var(--surface2);border-color:var(--border2)}
+.doc-nav-link .doc-nav-num{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);display:block;margin-bottom:2px}
+.doc-nav-link.active .doc-nav-num{color:var(--accent)}
+
+.doc-body-wrap{flex:1;overflow-y:auto;padding:72px 72px 120px;max-width:860px}
+
+.doc-eyebrow{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.15em;color:var(--accent);text-transform:uppercase;margin-bottom:20px}
+.doc-title{font-family:'Fraunces',serif;font-weight:400;font-size:38px;line-height:1.1;letter-spacing:-0.02em;color:var(--text);margin-bottom:12px}
+.doc-subtitle{font-family:'Manrope',sans-serif;font-weight:300;font-size:16px;color:var(--muted);margin-bottom:64px;line-height:1.55;max-width:560px}
+.doc-divider{height:1px;background:var(--border);margin:64px 0}
+.doc-section-num{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);letter-spacing:.15em;margin-bottom:10px}
+.doc-section-title{font-family:'Fraunces',serif;font-weight:400;font-size:23px;letter-spacing:-0.01em;color:var(--text);margin-bottom:20px}
+.doc-prose{font-family:'Manrope',sans-serif;font-weight:300;font-size:15px;color:rgba(240,237,232,.72);line-height:1.75;max-width:640px}
+.doc-prose p{margin-bottom:14px}
+.doc-prose p:last-child{margin-bottom:0}
+.doc-prose strong{color:var(--text);font-weight:500}
+
+/* Spectrum */
+.spectrum{margin:36px 0;padding:32px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+.spectrum-labels{display:flex;justify-content:space-between;margin-bottom:4px;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase}
+.spectrum-bar{height:3px;border-radius:4px;background:linear-gradient(90deg,rgba(124,111,255,.5) 0%,rgba(78,205,196,.5) 50%,rgba(244,200,66,.5) 100%);margin:8px 0 0}
+.spectrum-points{display:grid;grid-template-columns:repeat(3,1fr);gap:0;position:relative;top:-7px}
+.spectrum-point{display:flex;flex-direction:column;align-items:center;padding:0 8px}
+.spectrum-dot{width:14px;height:14px;border-radius:50%;border:3px solid var(--surface);margin-bottom:16px}
+.spectrum-dot.p1{background:var(--accent2)}
+.spectrum-dot.p2{background:var(--teal)}
+.spectrum-dot.p3{background:var(--gold)}
+.spectrum-intent{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+.spectrum-point.p1 .spectrum-intent{color:var(--accent2)}
+.spectrum-point.p2 .spectrum-intent{color:var(--teal)}
+.spectrum-point.p3 .spectrum-intent{color:var(--gold)}
+.spectrum-statement{font-family:'Fraunces',serif;font-weight:400;font-size:16px;color:var(--text);margin-bottom:10px;text-align:center;max-width:200px;line-height:1.35;letter-spacing:-0.005em}
+.spectrum-action{font-family:'Manrope',sans-serif;font-weight:300;font-size:12px;color:var(--muted);text-align:center;line-height:1.55;max-width:200px}
+.spectrum-action strong{color:var(--text);font-weight:500}
+
+/* Hypothesis cards */
+.hypo-grid{display:flex;flex-direction:column;gap:0;margin:28px 0;border-top:1px solid var(--border)}
+.hypo-card{padding:28px 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:180px 1fr;gap:32px;align-items:start}
+.hypo-left{}
+.hypo-num{font-family:'DM Mono',monospace;font-size:9px;color:var(--accent2);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px}
+.hypo-label{font-family:'Fraunces',serif;font-weight:400;font-size:17px;color:var(--text);line-height:1.35;letter-spacing:-0.01em}
+.hypo-right{}
+.hypo-premise{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+.hypo-body{font-family:'Manrope',sans-serif;font-weight:300;font-size:13px;color:var(--muted);line-height:1.7}
+.hypo-body strong{color:var(--text);font-weight:500}
+.hypo-body p{margin-bottom:10px}
+.hypo-body p:last-child{margin-bottom:0}
+.hypo-inference{margin-top:14px;padding:12px 14px;border-radius:7px;background:rgba(200,240,100,.04);border:1px solid rgba(200,240,100,.15);font-family:'Manrope',sans-serif;font-weight:400;font-size:12px;color:rgba(200,240,100,.8);line-height:1.6}
+.hypo-inference::before{content:'→ ';opacity:.6}
+
+/* Callout */
+.callout{padding:16px 20px;margin:28px 0;border-radius:8px;border-left:2px solid var(--accent);background:rgba(200,240,100,.04)}
+.callout-title{font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.callout-body{font-family:'Manrope',sans-serif;font-weight:300;font-size:13px;color:rgba(240,237,232,.7);line-height:1.65}
+
+/* Matrix */
+.matrix-table{width:100%;border-collapse:collapse;margin:28px 0}
+.matrix-table th{text-align:left;padding:10px 14px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);border-bottom:1px solid var(--border2);font-weight:500}
+.matrix-table td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.55;font-weight:300;font-size:12px}
+.matrix-table td:first-child{color:var(--text);font-weight:500}
+.td-cta{font-family:'DM Mono',monospace;font-size:10px;color:var(--green);font-weight:500}
+.td-dest{color:var(--muted)}
+
+/* Experiments */
+.exp-intro{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:28px 0}
+.exp-card{padding:22px;border-radius:10px;border:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;gap:14px;position:relative}
+.exp-card.exp-rec{border-color:rgba(200,240,100,.4)}
+.exp-num{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);letter-spacing:.12em;text-transform:uppercase;margin-bottom:0}
+.exp-card.exp-rec .exp-num{color:var(--accent)}
+.exp-title{font-family:'Manrope',sans-serif;font-weight:500;font-size:14px;color:var(--text);line-height:1.4;letter-spacing:-0.005em}
+.exp-detail{font-family:'Manrope',sans-serif;font-weight:300;font-size:12px;color:var(--muted);line-height:1.65}
+.exp-visual{border-radius:6px;border:1px solid var(--border2);background:var(--surface2);padding:12px;display:flex;flex-direction:column;gap:5px}
+.exp-visual-phone{width:100%;padding:8px 10px;border-radius:5px;font-family:'DM Mono',monospace;font-size:9px;text-align:center;font-weight:500}
+.exp-visual-phone.v-primary{background:rgba(200,240,100,.15);color:var(--accent);border:1px solid rgba(200,240,100,.3)}
+.exp-visual-phone.v-secondary{background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--border2)}
+.exp-visual-phone.v-ghost{background:transparent;color:var(--muted2);border:1px dashed var(--border2);font-style:italic}
+.exp-risk{margin-top:auto;padding:9px 11px;border-radius:6px;background:rgba(255,123,84,.06);border:1px solid rgba(255,123,84,.18);font-family:'Manrope',sans-serif;font-weight:300;font-size:11px;color:var(--warn);line-height:1.55}
+
+/* Principle list */
+.principle-list{display:flex;flex-direction:column;gap:0;margin:28px 0;border-top:1px solid var(--border)}
+.principle-row{display:flex;align-items:flex-start;gap:24px;padding:20px 0;border-bottom:1px solid var(--border)}
+.principle-num{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);letter-spacing:.1em;width:32px;flex-shrink:0;padding-top:3px}
+.principle-title{font-family:'Manrope',sans-serif;font-weight:500;font-size:15px;color:var(--text);margin-bottom:6px;letter-spacing:-0.005em}
+.principle-desc{font-family:'Manrope',sans-serif;font-weight:300;font-size:13px;color:var(--muted);line-height:1.65;max-width:540px}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Quick Feed <span>/</span> CTA</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchPanel('flow',this)">Flowchart</button>
+    <button class="nav-tab" onclick="switchPanel('sim',this)">Simulator</button>
+    <button class="nav-tab" onclick="switchPanel('doc',this)">Principles</button>
+  </div>
+  <div class="nav-badge">IN REVIEW</div>
+</nav>
+
+<!-- ══════════════════════ FLOWCHART ══════════════════════ -->
+<div id="panel-flow" class="panel active">
+  <div class="flow-header">
+    <div class="flow-header-left">
+      <div class="flow-eyebrow">Flowchart</div>
+      <div class="flow-title">CTA decision tree</div>
+      <div class="flow-sub">Linkage → entitlement → content type → watch state. Click any decision node to expand.</div>
+    </div>
+    <div class="flow-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(124,111,255,.5);border:1px solid rgba(124,111,255,.6)"></div>Decision</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(124,111,255,.12);border:1px solid rgba(124,111,255,.4)"></div>Movie / Sports</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(255,180,60,.1);border:1px solid rgba(255,180,60,.5)"></div>Shows (complex)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(61,220,151,.1);border:1px solid rgba(61,220,151,.35)"></div>Outcome</div>
+    </div>
+  </div>
+  <div class="flow-canvas">
+    <div class="tree-wrap"><div id="org-tree"></div></div>
+  </div>
+</div>
+
+<!-- ══════════════════════ SIMULATOR ══════════════════════ -->
+<div id="panel-sim" class="panel">
+  <div class="sim-wrap">
+    <div class="sim-left">
+      <div class="sim-section-head">Quick scenarios</div>
+      <div id="scenario-list"></div>
+      <div class="sim-section-head" style="margin-top:28px">Configure</div>
+      <div id="controls-wrap"></div>
+    </div>
+
+    <div class="sim-mid">
+      <!-- Phone 1: Primary -->
+      <div class="phone-stage">
+        <div class="phone-label">Primary path</div>
+        <div class="phone">
+          <div class="phone-video-bg"></div>
+          <div class="phone-grain"></div>
+          <div class="phone-scene-lines" id="scene-lines-1"></div>
+          <div class="phone-vignette"></div>
+          <div class="phone-top-bar">
+            <div class="phone-wayfind"><div class="phone-wayfind-dot"></div><div class="phone-wayfind-text" id="p-wayfind">—</div></div>
+            <div class="phone-live-badge" id="p-live">LIVE</div>
+          </div>
+          <div class="phone-actions">
+            <div class="phone-action-btn">♡</div>
+            <div class="phone-action-btn">↑</div>
+            <div class="phone-action-btn">⊕</div>
+          </div>
+          <div class="phone-bottom">
+            <div class="phone-show-title" id="p-title">—</div>
+            <div class="phone-ep-desc" id="p-desc">—</div>
+            <div class="phone-ctas" id="p-ctas"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alt phone: shows when there's an alt -->
+      <div class="phone-stage" id="alt-phone-stage" style="opacity:.45;transition:opacity .3s">
+        <div class="phone-label" id="alt-phone-label">Alt / experiment</div>
+        <div class="phone">
+          <div class="phone-video-bg"></div>
+          <div class="phone-grain"></div>
+          <div class="phone-scene-lines" id="scene-lines-2"></div>
+          <div class="phone-vignette"></div>
+          <div class="phone-top-bar">
+            <div class="phone-wayfind"><div class="phone-wayfind-dot"></div><div class="phone-wayfind-text" id="p-wayfind-alt">—</div></div>
+          </div>
+          <div class="phone-actions">
+            <div class="phone-action-btn">♡</div>
+            <div class="phone-action-btn">↑</div>
+            <div class="phone-action-btn">⊕</div>
+          </div>
+          <div class="phone-bottom">
+            <div class="phone-show-title" id="p-title-alt">—</div>
+            <div class="phone-ep-desc" id="p-desc-alt">—</div>
+            <div class="phone-ctas" id="p-ctas-alt"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trail -->
+      <div class="sim-trail">
+        <div class="trail-head">Decision trail</div>
+        <div id="trail-steps"></div>
+        <div id="result-card" class="result-card"></div>
+      </div>
+    </div>
+
+    <div class="sim-right">
+      <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px">Core tenets</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--surface)">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">01 — Identify</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.6;font-weight:300">Show + SxEy always visible on player. Even if they don't tap, they know what they saw.</div>
+        </div>
+        <div style="padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--surface)">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">02 — Direct</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.6;font-weight:300">"Watch S3 E4" / "Resume S2 E8" / "Watch Live" — never just "Watch Now".</div>
+        </div>
+        <div style="padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--surface)">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">03 — Default to clip</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.6;font-weight:300">Take users to the episode the clip is from. Finding S1E1 from there is easy. The reverse is not.</div>
+        </div>
+        <div style="padding:12px;border-radius:8px;border:1px solid rgba(255,123,84,.3);background:rgba(255,123,84,.04)">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--warn);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">04 — One CTA preferred</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.6;font-weight:300">Two CTAs = two decisions. On a mindless-sampling feed, that's friction.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ PRINCIPLES ══════════════════════ -->
+<div id="panel-doc" class="panel">
+
+  <div class="doc-nav">
+    <div class="doc-nav-head">Contents</div>
+    <a class="doc-nav-link active" data-sec="intro" onclick="scrollToSec('intro',this)">
+      <span class="doc-nav-num">—</span>Introduction
+    </a>
+    <a class="doc-nav-link" data-sec="spectrum" onclick="scrollToSec('spectrum',this)">
+      <span class="doc-nav-num">01</span>Intent spectrum
+    </a>
+    <a class="doc-nav-link" data-sec="hypo" onclick="scrollToSec('hypo',this)">
+      <span class="doc-nav-num">02</span>Two hypotheses
+    </a>
+    <a class="doc-nav-link" data-sec="path" onclick="scrollToSec('path',this)">
+      <span class="doc-nav-num">03</span>The path
+    </a>
+    <a class="doc-nav-link" data-sec="experiments" onclick="scrollToSec('experiments',this)">
+      <span class="doc-nav-num">04</span>Experiments
+    </a>
+    <a class="doc-nav-link" data-sec="tenets" onclick="scrollToSec('tenets',this)">
+      <span class="doc-nav-num">05</span>Tenets
+    </a>
+  </div>
+
+  <div class="doc-body-wrap" id="doc-scroll">
+
+    <div id="sec-intro">
+      <div class="doc-eyebrow">POV · Quick Feed CTA</div>
+      <div class="doc-title">The CTA is how we keep the promise.</div>
+      <div class="doc-subtitle">A framework for where the user lands when they tap out of a clip.</div>
+      <div class="doc-prose">
+        <p>Quick Feed is built around behaviour — <strong>mindless scrolling, low commitment, short bursts.</strong> Some clips are there to keep you on the feed. Some clips are there to build the watch commitment.</p>
+        <p>The CTA exists to bridge that idle browse into actual watch time. But the user could be in any of several mental states when they come into Quick Feed — a few flicks between a match, timepass, or looking to find their evening watch.</p>
+        <p>The clip is a promise. The CTA is how we keep it.</p>
+      </div>
+    </div>
+
+    <div class="doc-divider"></div>
+
+    <div id="sec-spectrum">
+      <div class="doc-section-num">Section 01</div>
+      <div class="doc-section-title">The intent spectrum</div>
+      <div class="doc-prose"><p>Users arrive with a spectrum of intent. The same clip serves very different mental states. The challenge is picking a default that serves the widest set without betraying any of them.</p></div>
+
+      <div class="spectrum">
+        <div class="spectrum-labels"><span>High commitment</span><span>Low commitment</span></div>
+        <div class="spectrum-bar"></div>
+        <div class="spectrum-points">
+          <div class="spectrum-point p1">
+            <div class="spectrum-dot p1"></div>
+            <div class="spectrum-intent">Ready to watch</div>
+            <div class="spectrum-statement">"I'm in. Let me start the show."</div>
+            <div class="spectrum-action"><strong>Action:</strong> Start / Resume the show</div>
+          </div>
+          <div class="spectrum-point p2">
+            <div class="spectrum-dot p2"></div>
+            <div class="spectrum-intent">Wants the moment</div>
+            <div class="spectrum-statement">"Show me what's happening here."</div>
+            <div class="spectrum-action"><strong>Action:</strong> Watch the clip's episode</div>
+          </div>
+          <div class="spectrum-point p3">
+            <div class="spectrum-dot p3"></div>
+            <div class="spectrum-intent">Curious, not committed</div>
+            <div class="spectrum-statement">"Bookmark it. Maybe later."</div>
+            <div class="spectrum-action"><strong>Action:</strong> Watchlist</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-divider"></div>
+
+    <div id="sec-hypo">
+      <div class="doc-section-num">Section 02</div>
+      <div class="doc-section-title">Two hypotheses</div>
+      <div class="doc-prose"><p>Two working hypotheses guide how we collapse the spectrum into a single default CTA.</p></div>
+
+      <div class="hypo-grid">
+        <div class="hypo-card">
+          <div class="hypo-left">
+            <div class="hypo-num">Hypothesis 01</div>
+            <div class="hypo-label">Do the harder task for the user</div>
+          </div>
+          <div class="hypo-right">
+            <div class="hypo-premise">The asymmetry argument</div>
+            <div class="hypo-body">
+              <p>If we take the user to the episode the clip is from, finding S1E1 is easy — it's right there in the player or details page. <strong>The reverse is not true.</strong> Landing on S1E1, then navigating back to the specific episode the clip came from, requires multiple steps.</p>
+              <p>The asymmetry is clear: the harder task is finding the clip's episode. We solve that. The easier task — navigating to S1E1 — the user can do themselves.</p>
+            </div>
+            <div class="hypo-inference">Default to clip's episode. S1E1 stays accessible, just not front-and-centre.</div>
+          </div>
+        </div>
+        <div class="hypo-card">
+          <div class="hypo-left">
+            <div class="hypo-num">Hypothesis 02</div>
+            <div class="hypo-label">Two CTAs, but use sparingly</div>
+          </div>
+          <div class="hypo-right">
+            <div class="hypo-premise">The friction argument</div>
+            <div class="hypo-body">
+              <p>Two CTAs means two decisions. On a Quick Feed where the goal is mindless sampling, every additional decision is friction at the wrong moment. A secondary CTA also produces misleading data — low taps look like "users don't want this option" when really they just didn't want to decide.</p>
+              <p>One CTA is the default. Where two are used, it should be for <strong>genuine forks</strong> where both intents are equally real — not a hedge because we're unsure.</p>
+            </div>
+            <div class="hypo-inference">Test two CTAs as an experiment, not as a blanket policy.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="doc-divider"></div>
+
+    <div id="sec-path">
+      <div class="doc-section-num">Section 03</div>
+      <div class="doc-section-title">The path</div>
+      <div class="doc-prose"><p>Our go-to: take users to the episode the clip is from. One CTA, honest label, smart wayfinding.</p></div>
+
+      <table class="matrix-table">
+        <thead><tr><th>Content</th><th>State</th><th>CTA</th><th>Destination</th></tr></thead>
+        <tbody>
+          <tr><td>No parent</td><td class="td-dest">—</td><td class="td-cta">No watch CTA</td><td class="td-dest">Clip stands alone. Swipe-right to collection if it exists.</td></tr>
+          <tr><td>Needs subscription</td><td class="td-dest">—</td><td class="td-cta">Subscribe to watch</td><td class="td-dest">PSP → start from beginning post-subscribe.</td></tr>
+          <tr><td>Movie</td><td class="td-dest">Never / watched before</td><td class="td-cta">Watch now</td><td class="td-dest">Start from beginning.</td></tr>
+          <tr><td>Movie</td><td class="td-dest">In CW</td><td class="td-cta">Resume</td><td class="td-dest">From CW timestamp.</td></tr>
+          <tr><td>Sports</td><td class="td-dest">Live</td><td class="td-cta">Watch Live</td><td class="td-dest">Live stream.</td></tr>
+          <tr><td>Sports</td><td class="td-dest">Highlight / surround</td><td class="td-cta">Watch now</td><td class="td-dest">The relevant video.</td></tr>
+          <tr><td>Show</td><td class="td-dest">Never watched</td><td class="td-cta">Watch this episode</td><td class="td-dest">Episode the clip is from.</td></tr>
+          <tr><td>Show</td><td class="td-dest">Mid-watch</td><td class="td-cta">Watch this episode</td><td class="td-dest">Clip's episode. Resumption isn't the QF goal — exploration is.</td></tr>
+          <tr><td>Show</td><td class="td-dest">Fully watched</td><td class="td-cta">Watch Sn Em</td><td class="td-dest">Exact episode. Safe — no spoilers.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="doc-divider"></div>
+
+    <div id="sec-experiments">
+      <div class="doc-section-num">Section 04</div>
+      <div class="doc-section-title">Three experiments</div>
+      <div class="doc-prose"><p>We don't need to settle single vs. double CTA in one shot. Three testable variants — each with a clear hypothesis and what it tells us.</p></div>
+
+      <div class="exp-intro">
+        <div class="exp-card exp-rec">
+          <div class="exp-num">Experiment 01 · Recommended</div>
+          <div class="exp-title">Single CTA — clip's episode, always</div>
+          <div class="exp-detail">Do the harder task for the user. One destination, one decision. Cleanest baseline.</div>
+          <div class="exp-visual">
+            <div class="exp-visual-phone v-primary">Watch S3E8</div>
+          </div>
+          <div class="exp-risk">Users wanting "start from beginning" find their own way. Mitigation: details page is one tap away.</div>
+        </div>
+        <div class="exp-card">
+          <div class="exp-num">Experiment 02</div>
+          <div class="exp-title">Two CTAs — clip primary, start from beginning secondary</div>
+          <div class="exp-detail">Honour both intents. Primary is clip's episode; secondary gives the committed-viewer an explicit path.</div>
+          <div class="exp-visual">
+            <div class="exp-visual-phone v-primary">Watch S3E8</div>
+            <div class="exp-visual-phone v-secondary">Start from S1E1</div>
+          </div>
+          <div class="exp-risk">Two decisions. Secondary may bleed clicks from primary without converting to longer sessions.</div>
+        </div>
+        <div class="exp-card">
+          <div class="exp-num">Experiment 03 · CW users only</div>
+          <div class="exp-title">Two CTAs for mid-watch — clip / resume</div>
+          <div class="exp-detail">Restrict the two-CTA pattern to mid-watch users, where both intents are genuinely real.</div>
+          <div class="exp-visual">
+            <div class="exp-visual-phone v-primary">Watch S3E8</div>
+            <div class="exp-visual-phone v-secondary">Resume S2E5</div>
+          </div>
+          <div class="exp-risk">Spoiler risk if clip is ahead of CW. Needs P13n guard upstream.</div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="callout-title">Sequencing</div>
+        <div class="callout-body">Start with Experiment 1 in Phase 1. Measure retention 30s post-tap, not just tap-through. High tap + fast bounce is the fingerprint of a misleading CTA. Layer Experiments 2 or 3 in Phase 2 based on what Phase 1 signals.</div>
+      </div>
+    </div>
+
+    <div class="doc-divider"></div>
+
+    <div id="sec-tenets">
+      <div class="doc-section-num">Section 05</div>
+      <div class="doc-section-title">Three things to always get right</div>
+
+      <div class="principle-list">
+        <div class="principle-row">
+          <div class="principle-num">01</div>
+          <div>
+            <div class="principle-title">Tell users where the clip is from</div>
+            <div class="principle-desc">Show + S[x]E[y] or match name, always visible on the player. Independent of the CTA. Even if they don't tap, they know what they saw.</div>
+          </div>
+        </div>
+        <div class="principle-row">
+          <div class="principle-num">02</div>
+          <div>
+            <div class="principle-title">Make the label describe the destination</div>
+            <div class="principle-desc">"Start from S1E1" / "Watch S3E8" / "Resume S2E5" / "Watch Live". The user reads it and knows what happens next. No "Watch Now".</div>
+          </div>
+        </div>
+        <div class="principle-row">
+          <div class="principle-num">03</div>
+          <div>
+            <div class="principle-title">Give two buttons only when there are actually two good answers</div>
+            <div class="principle-desc">Most of the time, one button is right. Two buttons everywhere = noise. The second CTA earns its place only when both intents are genuinely real and equally weighted — not as a hedge because we're unsure.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ══════ TREE DATA ══════
+const TREE = {
+  id:'root', type:'start', title:'A clip',
+  children:[
+    { id:'no-parent', type:'decision',
+      meta:'Not linked to single content',
+      tag:'No parent', title:'Doesn\'t have a parent',
+      children:[
+        { id:'no-cta', type:'outcome-nocta', tag:'Default', meta:'Entitlement doesn\'t matter',
+          title:'No watch CTA',
+          sub:'Clips are for fling-around, not commitment.',
+          ctas:[{label:'No CTA',cls:'cta-none'}] },
+        { id:'collection', type:'outcome-good', tag:'If has collection',
+          title:'Swipe right → collection page',
+          sub:'Cricket / genre / tournament. Explore CTA in future.',
+          ctas:[{label:'Explore collection',cls:'cta-muted'}] },
+      ]
+    },
+    { id:'has-parent', type:'decision',
+      meta:'Linked to single content',
+      tag:'Has parent', title:'Has a parent content',
+      children:[
+        { id:'sub-needed', type:'outcome-sub', tag:'Needs subscription / honeypot',
+          title:'Subscribe to watch',
+          sub:'PSP → start from beginning post-subscribe',
+          ctas:[{label:'Subscribe to watch',cls:'cta-gold'}] },
+        { id:'free', type:'decision', tag:'Watch freely', title:'Content type?',
+          children:[
+            { id:'movie', type:'movie', tag:'Movies', title:'Watch state?',
+              children:[
+                { id:'movie-fresh', type:'movie-leaf', tag:'Never / watched before', title:'Watch now', sub:'Start from beginning', ctas:[{label:'Watch now',cls:'cta-movie'}] },
+                { id:'movie-cw', type:'movie-leaf', tag:'In CW', title:'Resume', sub:'From timestamp', ctas:[{label:'Resume',cls:'cta-movie'}] },
+              ]
+            },
+            { id:'sports', type:'sports', tag:'Sports', title:'Live or past?',
+              children:[
+                { id:'sports-live', type:'sports-leaf', tag:'Clip from live sports', title:'Watch Live', sub:'Live stream', ctas:[{label:'Watch Live',cls:'cta-sports'}] },
+                { id:'sports-past', type:'sports-leaf', tag:'Highlight / single / surround', title:'Watch now', sub:'The relevant video', ctas:[{label:'Watch now',cls:'cta-sports'}] },
+              ]
+            },
+            { id:'show', type:'show', tag:'Shows', title:'Watch state?',
+              sub:'GEC, non-GEC, reality, international, specials — scenarios not all cleanly defined yet.',
+              children:[
+                { id:'show-new', type:'show-leaf', tag:'Never watched', title:'Watch this episode',
+                  sub:'Episode the clip is from.',
+                  ctas:[{label:'Watch Sn Em',cls:'cta-show'},{label:'+ Start S1E1 (future)',cls:'cta-muted'}] },
+                { id:'show-mid', type:'show-leaf', tag:'Mid-watch (CW)', title:'Watch this episode',
+                  sub:'Exploration over resumption.',
+                  ctas:[{label:'Watch Sn Em',cls:'cta-show'},{label:'+ Resume (future)',cls:'cta-muted'}] },
+                { id:'show-done', type:'show-leaf', tag:'Fully watched', title:'Watch Sn Em',
+                  sub:'Exact episode. No spoilers.',
+                  ctas:[{label:'Watch Sn Em',cls:'cta-show'}] },
+              ]
+            }
+          ]
+        }
+      ]
+    },
+  ]
+};
+
+const openNodes = new Set(['root','has-parent','free','show']);
+
+function buildNode(node) {
+  const wrap = document.createElement('div');
+  wrap.className = 'org-node-wrap';
+  wrap.style.alignItems = 'flex-start';
+
+  const box = document.createElement('div');
+  const hasChildren = node.children && node.children.length > 0;
+
+  const typeMap = {
+    'start':'start-node','decision':'decision',
+    'outcome-nocta':'outcome-nocta','outcome-sub':'outcome-sub','outcome-good':'outcome-good',
+    'movie':'movie has-ch','sports':'sports has-ch','show':'show has-ch',
+    'movie-leaf':'node-box movie-leaf','sports-leaf':'node-box sports-leaf','show-leaf':'node-box show-leaf'
+  };
+
+  let cls = 'node-box ';
+  if (typeMap[node.type]) cls += typeMap[node.type];
+  else cls += 'decision';
+  if (hasChildren && !['movie','sports','show'].includes(node.type)) cls += ' has-ch';
+  if (hasChildren && openNodes.has(node.id)) cls += ' open';
+  box.className = cls.trim();
+
+  let inner = '';
+  if (node.tag) inner += `<div class="n-tag">${node.tag}</div>`;
+  if (node.meta) inner += `<div class="n-meta">${node.meta}</div>`;
+  inner += `<div class="n-title">${node.title}</div>`;
+  if (node.sub) inner += `<div class="n-sub">${node.sub}</div>`;
+  if (node.ctas) node.ctas.forEach(c => { inner += `<span class="cta-label ${c.cls}">${c.label}</span>`; });
+  box.innerHTML = inner;
+
+  if (hasChildren) {
+    box.onclick = e => {
+      e.stopPropagation();
+      openNodes.has(node.id) ? openNodes.delete(node.id) : openNodes.add(node.id);
+      rebuildTree();
+    };
+  }
+
+  wrap.appendChild(box);
+
+  if (hasChildren && openNodes.has(node.id)) {
+    const conn = document.createElement('div');
+    conn.style.cssText = 'display:flex;align-items:flex-start';
+    const hline = document.createElement('div');
+    hline.style.cssText = 'width:28px;height:1px;background:var(--border2);align-self:flex-start;flex-shrink:0;margin-top:24px';
+    const vwrap = document.createElement('div');
+    vwrap.style.cssText = 'display:flex;flex-direction:row;align-items:stretch';
+    const vlineWrap = document.createElement('div');
+    vlineWrap.style.cssText = 'display:flex;flex-direction:column;flex-shrink:0';
+    const vline = document.createElement('div');
+    vline.style.cssText = 'width:1px;background:var(--border2);flex:1;margin-top:24px;margin-bottom:24px';
+    vlineWrap.appendChild(vline);
+    const childrenCol = document.createElement('div');
+    childrenCol.style.cssText = 'display:flex;flex-direction:column;gap:12px;padding:4px 0';
+    node.children.forEach(child => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:flex-start';
+      const hl = document.createElement('div');
+      hl.style.cssText = 'width:20px;height:1px;background:var(--border2);flex-shrink:0;margin-top:24px';
+      row.appendChild(hl);
+      row.appendChild(buildNode(child));
+      childrenCol.appendChild(row);
+    });
+    vwrap.appendChild(vlineWrap);
+    vwrap.appendChild(childrenCol);
+    conn.appendChild(hline);
+    conn.appendChild(vwrap);
+    wrap.appendChild(conn);
+  }
+  return wrap;
+}
+
+function rebuildTree() {
+  const c = document.getElementById('org-tree');
+  c.innerHTML = '';
+  c.appendChild(buildNode(TREE));
+}
+
+// ══════ SIMULATOR ══════
+const SCENARIOS = [
+  { id:'s1', tag:'Show · Never watched', label:'Show — never watched', state:{ parent:'yes', access:'free', type:'show', watchState:'never', live:'no' }, altDesc:'Exp 02: add Start from S1E1' },
+  { id:'s2', tag:'Show · Mid-watch', label:'Show — mid-watch (CW)', state:{ parent:'yes', access:'free', type:'show', watchState:'watching', live:'no' }, altDesc:'Exp 03: Clip / Resume' },
+  { id:'s3', tag:'Show · Fully watched', label:'Show — fully watched', state:{ parent:'yes', access:'free', type:'show', watchState:'finished', live:'no' }, altDesc:null },
+  { id:'s4', tag:'Movie · Fresh', label:'Movie — never / before', state:{ parent:'yes', access:'free', type:'movie', watchState:'never', live:'no' }, altDesc:null },
+  { id:'s5', tag:'Movie · CW', label:'Movie — in CW', state:{ parent:'yes', access:'free', type:'movie', watchState:'watching', live:'no' }, altDesc:null },
+  { id:'s6', tag:'Sports · Live', label:'Sports — live match clip', state:{ parent:'yes', access:'free', type:'sports', watchState:'na', live:'yes' }, altDesc:null },
+  { id:'s7', tag:'Sports · Highlight', label:'Sports — highlight clip', state:{ parent:'yes', access:'free', type:'sports', watchState:'na', live:'no' }, altDesc:null },
+  { id:'s8', tag:'Paywalled', label:'Premium / honeypot content', state:{ parent:'yes', access:'sub', type:'show', watchState:'never', live:'no' }, altDesc:null },
+  { id:'s9', tag:'No parent', label:'Mashup — no parent linkage', state:{ parent:'no', access:'na', type:'na', watchState:'na', live:'no' }, altDesc:null },
+];
+
+const CONTROLS = [
+  { id:'parent', label:'Parent linkage', opts:[{v:'yes',l:'Has parent'},{v:'no',l:'No parent'}] },
+  { id:'access', label:'Entitlement', opts:[{v:'free',l:'Watch freely'},{v:'sub',l:'Needs sub'}] },
+  { id:'type', label:'Content type', opts:[{v:'movie',l:'Movie'},{v:'show',l:'Show'},{v:'sports',l:'Sports'}] },
+  { id:'watchState', label:'Watch state', opts:[{v:'never',l:'Never watched'},{v:'watching',l:'Mid-watch (CW)'},{v:'finished',l:'Fully watched'}] },
+  { id:'live', label:'Match status', opts:[{v:'yes',l:'Live'},{v:'no',l:'Highlight / past'}] },
+];
+
+let simState = {...SCENARIOS[0].state};
+let activeScenario = 's1';
+let activeAltDesc = SCENARIOS[0].altDesc;
+
+function decide(s) {
+  if (s.parent === 'no') return {
+    wayfind:'No parent · Collection', title:'Mashup or themed clip', desc:'Top moments, actor cuts, themed mixes',
+    primary:null, secondary:null,
+    trail:[{k:'Parent linkage',v:'No parent',state:'active'},{k:'Entitlement',v:'Doesn\'t matter',state:''},{k:'Content type',v:'N/A',state:''},{k:'Watch state',v:'N/A',state:''}],
+    dest:'No watch CTA. Clip stands alone.', destSub:'Swipe-right reveals collection if one exists.', live:false,
+    altPrimary:null, altSecondary:null, altLabel:null
+  };
+  if (s.access === 'sub') return {
+    wayfind:'Premium · Subscription', title:'Premium content', desc:'Needs a subscription',
+    primary:{label:'Subscribe to watch',cls:'p-sub'}, secondary:null,
+    trail:[{k:'Parent linkage',v:'Has parent',state:'active'},{k:'Entitlement',v:'Needs subscription',state:'flagged'},{k:'Content type',v:'—',state:''},{k:'Watch state',v:'—',state:''}],
+    dest:'PSP.', destSub:'After subscribe → start from beginning.', live:false,
+    altPrimary:null, altSecondary:null, altLabel:null
+  };
+  if (s.type === 'movie') {
+    if (s.watchState === 'watching') return {
+      wayfind:'Movie · In CW', title:'A scene from this film', desc:'You\'re mid-way through',
+      primary:{label:'Resume',cls:'p-primary'}, secondary:null,
+      trail:[{k:'Parent linkage',v:'Has parent',state:'active'},{k:'Entitlement',v:'Watch freely',state:'active'},{k:'Content type',v:'Movie',state:'active'},{k:'Watch state',v:'In CW',state:'active'}],
+      dest:'Resume from CW timestamp.', destSub:null, live:false,
+      altPrimary:null, altSecondary:null, altLabel:null
+    };
+    return {
+      wayfind:'Movie', title:'A scene from this film', desc:s.watchState==='finished'?'You\'ve watched this before':'Movie clip',
+      primary:{label:'Watch now',cls:'p-primary'}, secondary:null,
+      trail:[{k:'Parent linkage',v:'Has parent',state:'active'},{k:'Entitlement',v:'Watch freely',state:'active'},{k:'Content type',v:'Movie',state:'active'},{k:'Watch state',v:s.watchState==='finished'?'Watched before':'Never watched',state:'active'}],
+      dest:'Start from beginning.', destSub:null, live:false,
+      altPrimary:null, altSecondary:null, altLabel:null
+    };
+  }
+  if (s.type === 'sports') {
+    if (s.live === 'yes') return {
+      wayfind:'MI vs GT · LIVE', title:'Key moment — live match', desc:'Match is live right now',
+      primary:{label:'Watch Live',cls:'p-primary'}, secondary:null,
+      trail:[{k:'Parent linkage',v:'Has parent',state:'active'},{k:'Entitlement',v:'Watch freely',state:'active'},{k:'Content type',v:'Sports',state:'active'},{k:'Match status',v:'Live now',state:'flagged'}],
+      dest:'Live stream — highest value, time-sensitive.', destSub:null, live:true,
+      altPrimary:null, altSecondary:null, altLabel:null
+    };
+    return {
+      wayfind:'Cricket highlight', title:'Sports highlight', desc:'Highlight or surround content',
+      primary:{label:'Watch now',cls:'p-primary'}, secondary:null,
+      trail:[{k:'Parent linkage',v:'Has parent',state:'active'},{k:'Entitlement',v:'Watch freely',state:'active'},{k:'Content type',v:'Sports',state:'active'},{k:'Match status',v:'Highlight / past',state:'active'}],
+      dest:'The relevant video.', destSub:null, live:false,
+      altPrimary:null, altSecondary:null, altLabel:null
+    };
+  }
+  if (s.type === 'show') {
+    if (s.watchState === 'never') return {
+      wayfind:'Show · S3E8', title:'A scene from this show', desc:'New to the show',
+      primary:{label:'Watch S3E8',cls:'p-primary'}, secondary:null,
+      trail:[{k:'Parent linkage',v:'Has parent',state:'active'},{k:'Entitlement',v:'Watch freely',state:'active'},{k:'Content type',v:'Show',state:'active'},{k:'Watch state',v:'Never watched',state:'active'}],
+      dest:'Episode the clip is from.', destSub:'Experiment 02: also offer "Start from S1E1" as secondary.', live:false,
+      altPrimary:{label:'Watch S3E8',cls:'p-primary'}, altSecondary:{label:'Start from S1E1',cls:'p-secondary'}, altLabel:'Exp 02 — two CTAs'
+    };
+    if (s.watchState === 'watching') return {
+      wayfind:'Show · S3E8', title:'A scene from this show', desc:'Mid-way through the show',
+      primary:{label:'Watch S3E8',cls:'p-primary'}, secondary:null,
+      trail:[{k:'Parent linkage',v:'Has parent',state:'active'},{k:'Entitlement',v:'Watch freely',state:'active'},{k:'Content type',v:'Show',state:'active'},{k:'Watch state',v:'Mid-watch (CW)',state:'active'}],
+      dest:'Clip\'s episode. Exploration over resumption.', destSub:'Experiment 03: also offer "Resume S2E5" for CW users.', live:false,
+      altPrimary:{label:'Watch S3E8',cls:'p-primary'}, altSecondary:{label:'Resume S2E5',cls:'p-secondary'}, altLabel:'Exp 03 — two CTAs (CW)'
+    };
+    return {
+      wayfind:'Show · S3E8', title:'A scene from this show', desc:'You\'ve seen it all',
+      primary:{label:'Watch S3E8',cls:'p-primary'}, secondary:null,
+      trail:[{k:'Parent linkage',v:'Has parent',state:'active'},{k:'Entitlement',v:'Watch freely',state:'active'},{k:'Content type',v:'Show',state:'active'},{k:'Watch state',v:'Fully watched',state:'active'}],
+      dest:'Exact episode. Safe — no spoilers.', destSub:null, live:false,
+      altPrimary:null, altSecondary:null, altLabel:null
+    };
+  }
+  return {wayfind:'—',title:'—',desc:'—',primary:{label:'Watch now',cls:'p-primary'},secondary:null,trail:[],dest:'—',destSub:null,live:false,altPrimary:null,altSecondary:null,altLabel:null};
+}
+
+function fillPhone(wayfind, title, desc, ctas, liveShow, sceneId) {
+  document.getElementById('p-wayfind').textContent = wayfind;
+  document.getElementById('p-title').textContent = title;
+  document.getElementById('p-desc').textContent = desc;
+  if (document.getElementById('p-live')) document.getElementById('p-live').classList.toggle('show', liveShow);
+
+  const sl = document.getElementById(sceneId);
+  if (sl) {
+    sl.innerHTML = '';
+    for (let i=0;i<8;i++) {
+      const l = document.createElement('div');
+      l.className='phone-scene-line';
+      l.style.width=(30+Math.random()*60)+'%';
+      l.style.opacity=0.3+Math.random()*0.7;
+      sl.appendChild(l);
+    }
+  }
+}
+
+function renderSim() {
+  const d = decide(simState);
+
+  // Primary phone
+  document.getElementById('p-wayfind').textContent = d.wayfind;
+  document.getElementById('p-title').textContent = d.title;
+  document.getElementById('p-desc').textContent = d.desc;
+  document.getElementById('p-live').classList.toggle('show', d.live);
+  const sl = document.getElementById('scene-lines-1');
+  sl.innerHTML = '';
+  for (let i=0;i<8;i++) {
+    const l=document.createElement('div');l.className='phone-scene-line';
+    l.style.width=(30+Math.random()*60)+'%';l.style.opacity=0.3+Math.random()*0.7;
+    sl.appendChild(l);
+  }
+  const ctaWrap = document.getElementById('p-ctas');
+  ctaWrap.innerHTML = '';
+  if (d.primary) { const b=document.createElement('div');b.className='phone-cta '+d.primary.cls;b.textContent=d.primary.label;ctaWrap.appendChild(b); }
+  else { const b=document.createElement('div');b.className='phone-cta p-none';b.textContent='No CTA — clip stands alone';ctaWrap.appendChild(b); }
+  if (d.secondary) { const b=document.createElement('div');b.className='phone-cta '+d.secondary.cls;b.textContent=d.secondary.label;ctaWrap.appendChild(b); }
+
+  // Alt phone
+  const altStage = document.getElementById('alt-phone-stage');
+  const altLabel = document.getElementById('alt-phone-label');
+  if (d.altPrimary) {
+    altStage.style.opacity = '1';
+    altLabel.textContent = d.altLabel || 'Alt experiment';
+    document.getElementById('p-wayfind-alt').textContent = d.wayfind;
+    document.getElementById('p-title-alt').textContent = d.title;
+    document.getElementById('p-desc-alt').textContent = d.desc;
+    const sl2 = document.getElementById('scene-lines-2');
+    sl2.innerHTML = '';
+    for (let i=0;i<8;i++) {
+      const l=document.createElement('div');l.className='phone-scene-line';
+      l.style.width=(30+Math.random()*60)+'%';l.style.opacity=0.3+Math.random()*0.7;
+      sl2.appendChild(l);
+    }
+    const altCtas = document.getElementById('p-ctas-alt');
+    altCtas.innerHTML = '';
+    const b1=document.createElement('div');b1.className='phone-cta '+d.altPrimary.cls;b1.textContent=d.altPrimary.label;altCtas.appendChild(b1);
+    if (d.altSecondary) { const b2=document.createElement('div');b2.className='phone-cta '+d.altSecondary.cls;b2.textContent=d.altSecondary.label;altCtas.appendChild(b2); }
+  } else {
+    altStage.style.opacity = '0.2';
+    altLabel.textContent = 'No alt for this case';
+    document.getElementById('p-ctas-alt').innerHTML = '<div class="phone-cta p-none">—</div>';
+    document.getElementById('p-title-alt').textContent = '—';
+    document.getElementById('p-desc-alt').textContent = '';
+    document.getElementById('p-wayfind-alt').textContent = '—';
+  }
+
+  // Trail
+  const trailEl = document.getElementById('trail-steps');
+  trailEl.innerHTML = '';
+  d.trail.forEach((row,i) => {
+    const div=document.createElement('div');
+    div.className='trail-step '+(row.state||'');
+    div.innerHTML=`<div class="trail-step-num">${String(i+1).padStart(2,'0')}</div><div style="flex:1"><div class="trail-step-key">${row.k}</div><div class="trail-step-val">${row.v}</div></div>`;
+    trailEl.appendChild(div);
+  });
+
+  document.getElementById('result-card').innerHTML = `
+    <div class="result-cta-label">Result</div>
+    <div class="result-primary">${d.primary?d.primary.label:'No CTA'}</div>
+    ${d.secondary?`<div class="result-secondary">+ ${d.secondary.label}</div>`:''}
+    <div class="result-dest">${d.dest}</div>
+    ${d.destSub?`<div class="result-dest" style="margin-top:6px;color:var(--muted2)">${d.destSub}</div>`:''}
+  `;
+}
+
+function buildScenarios() {
+  const wrap = document.getElementById('scenario-list');
+  wrap.innerHTML = '';
+  SCENARIOS.forEach(sc => {
+    const b = document.createElement('button');
+    b.className = 'scenario-chip'+(sc.id===activeScenario?' active':'');
+    b.innerHTML = `<span class="chip-tag">${sc.tag}</span>${sc.label}`;
+    b.onclick = () => {
+      activeScenario = sc.id;
+      simState = {...sc.state};
+      activeAltDesc = sc.altDesc;
+      document.querySelectorAll('.scenario-chip').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      buildControls();
+      renderSim();
+    };
+    wrap.appendChild(b);
+  });
+}
+
+function buildControls() {
+  const wrap = document.getElementById('controls-wrap');
+  wrap.innerHTML = '';
+  const isSports = simState.type === 'sports';
+  const noParent = simState.parent === 'no';
+  const needsSub = simState.access === 'sub';
+  const isMovie = simState.type === 'movie';
+
+  CONTROLS.forEach(cd => {
+    if (cd.id === 'live' && !isSports) return;
+    if (cd.id === 'watchState' && (isSports||noParent||needsSub)) return;
+    if (cd.id === 'type' && noParent) return;
+    if (cd.id === 'access' && noParent) return;
+
+    const group = document.createElement('div');
+    group.className = 'control-group';
+    const lbl = document.createElement('span');
+    lbl.className = 'ctrl-label';
+    lbl.textContent = cd.label;
+    group.appendChild(lbl);
+    const opts = document.createElement('div');
+    opts.className = 'ctrl-opts';
+    let optList = cd.opts;
+    if (cd.id === 'watchState' && isMovie) optList = [{v:'never',l:'Never / before'},{v:'watching',l:'In CW'}];
+    optList.forEach(opt => {
+      const b = document.createElement('button');
+      b.className = 'ctrl-opt'+(simState[cd.id]===opt.v?' active':'');
+      b.textContent = opt.l;
+      b.onclick = () => {
+        simState[cd.id] = opt.v;
+        activeScenario = null;
+        activeAltDesc = null;
+        document.querySelectorAll('.scenario-chip').forEach(x=>x.classList.remove('active'));
+        buildControls();
+        renderSim();
+      };
+      opts.appendChild(b);
+    });
+    group.appendChild(opts);
+    wrap.appendChild(group);
+  });
+}
+
+// ══════ PRINCIPLES NAV ══════
+function scrollToSec(id, el) {
+  const target = document.getElementById('sec-'+id);
+  const scroll = document.getElementById('doc-scroll');
+  if (target && scroll) {
+    scroll.scrollTo({ top: target.offsetTop - 40, behavior: 'smooth' });
+  }
+  document.querySelectorAll('.doc-nav-link').forEach(x=>x.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+document.getElementById('doc-scroll') && document.getElementById('doc-scroll').addEventListener('scroll', function() {
+  const sections = ['intro','spectrum','hypo','path','experiments','tenets'];
+  const scroll = this;
+  let current = 'intro';
+  sections.forEach(id => {
+    const el = document.getElementById('sec-'+id);
+    if (el && el.offsetTop - 80 <= scroll.scrollTop) current = id;
+  });
+  document.querySelectorAll('.doc-nav-link').forEach(x => {
+    x.classList.toggle('active', x.dataset.sec === current);
+  });
+});
+
+function switchPanel(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+function scrollToSec(id, el) {
+  const target = document.getElementById('sec-'+id);
+  const scroll = document.getElementById('doc-scroll');
+  if (target && scroll) {
+    scroll.scrollTo({ top: target.offsetTop - 32, behavior: 'smooth' });
+  }
+  document.querySelectorAll('.doc-nav-link').forEach(x => x.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const scroll = document.getElementById('doc-scroll');
+  if (!scroll) return;
+  scroll.addEventListener('scroll', () => {
+    const sections = ['intro','spectrum','hypo','path','experiments','tenets'];
+    let current = 'intro';
+    sections.forEach(secId => {
+      const el = document.getElementById('sec-'+secId);
+      if (el && el.offsetTop - 60 <= scroll.scrollTop) current = secId;
+    });
+    document.querySelectorAll('.doc-nav-link').forEach(x => {
+      x.classList.toggle('active', x.dataset.sec === current);
+    });
+  });
+});
+
+rebuildTree();
+buildScenarios();
+buildControls();
+renderSim();
+</script>
+</body>
+</html>
