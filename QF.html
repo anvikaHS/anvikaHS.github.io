@@ -205,13 +205,15 @@ nav{
   font-family:'Manrope',sans-serif;font-weight:300;font-size:12px;
   color:var(--muted);cursor:pointer;transition:all .15s;
   margin-bottom:2px;line-height:1.4;border:1px solid transparent;
+  text-decoration:none;
 }
 .doc-nav-link:hover{color:var(--text);background:var(--surface2)}
 .doc-nav-link.active{color:var(--text);background:var(--surface2);border-color:var(--border2)}
 .doc-nav-link .doc-nav-num{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);display:block;margin-bottom:2px}
 .doc-nav-link.active .doc-nav-num{color:var(--accent)}
 
-.doc-body-wrap{flex:1;overflow-y:auto;padding:72px 72px 120px;max-width:860px}
+.doc-body-wrap{flex:1;overflow-y:auto;padding:72px 72px 120px;height:calc(100vh - 56px)}
+.doc-body-wrap > div{max-width:760px}
 
 .doc-eyebrow{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.15em;color:var(--accent);text-transform:uppercase;margin-bottom:20px}
 .doc-title{font-family:'Fraunces',serif;font-weight:400;font-size:38px;line-height:1.1;letter-spacing:-0.02em;color:var(--text);margin-bottom:12px}
@@ -302,15 +304,15 @@ nav{
 <nav>
   <div class="nav-logo">Quick Feed <span>/</span> CTA</div>
   <div class="nav-tabs">
-    <button class="nav-tab active" onclick="switchPanel('flow',this)">Flowchart</button>
+    <button class="nav-tab active" onclick="switchPanel('doc',this)">Principles</button>
+    <button class="nav-tab" onclick="switchPanel('flow',this)">Flowchart</button>
     <button class="nav-tab" onclick="switchPanel('sim',this)">Simulator</button>
-    <button class="nav-tab" onclick="switchPanel('doc',this)">Principles</button>
   </div>
   <div class="nav-badge">IN REVIEW</div>
 </nav>
 
 <!-- ══════════════════════ FLOWCHART ══════════════════════ -->
-<div id="panel-flow" class="panel active">
+<div id="panel-flow" class="panel">
   <div class="flow-header">
     <div class="flow-header-left">
       <div class="flow-eyebrow">Flowchart</div>
@@ -422,26 +424,26 @@ nav{
 </div>
 
 <!-- ══════════════════════ PRINCIPLES ══════════════════════ -->
-<div id="panel-doc" class="panel">
+<div id="panel-doc" class="panel active">
 
   <div class="doc-nav">
     <div class="doc-nav-head">Contents</div>
-    <a class="doc-nav-link active" data-sec="intro" onclick="scrollToSec('intro',this)">
+    <a class="doc-nav-link active" data-sec="intro" onclick="scrollToSec('intro',this,event)">
       <span class="doc-nav-num">—</span>Introduction
     </a>
-    <a class="doc-nav-link" data-sec="spectrum" onclick="scrollToSec('spectrum',this)">
+    <a class="doc-nav-link" data-sec="spectrum" onclick="scrollToSec('spectrum',this,event)">
       <span class="doc-nav-num">01</span>Intent spectrum
     </a>
-    <a class="doc-nav-link" data-sec="hypo" onclick="scrollToSec('hypo',this)">
+    <a class="doc-nav-link" data-sec="hypo" onclick="scrollToSec('hypo',this,event)">
       <span class="doc-nav-num">02</span>Two hypotheses
     </a>
-    <a class="doc-nav-link" data-sec="path" onclick="scrollToSec('path',this)">
+    <a class="doc-nav-link" data-sec="path" onclick="scrollToSec('path',this,event)">
       <span class="doc-nav-num">03</span>The path
     </a>
-    <a class="doc-nav-link" data-sec="experiments" onclick="scrollToSec('experiments',this)">
+    <a class="doc-nav-link" data-sec="experiments" onclick="scrollToSec('experiments',this,event)">
       <span class="doc-nav-num">04</span>Experiments
     </a>
-    <a class="doc-nav-link" data-sec="tenets" onclick="scrollToSec('tenets',this)">
+    <a class="doc-nav-link" data-sec="tenets" onclick="scrollToSec('tenets',this,event)">
       <span class="doc-nav-num">05</span>Tenets
     </a>
   </div>
@@ -1055,31 +1057,41 @@ function switchPanel(id, btn) {
   if (btn) btn.classList.add('active');
 }
 
-function scrollToSec(id, el) {
+function scrollToSec(id, el, e) {
+  if (e) e.preventDefault();
   const target = document.getElementById('sec-'+id);
   const scroll = document.getElementById('doc-scroll');
   if (target && scroll) {
-    scroll.scrollTo({ top: target.offsetTop - 32, behavior: 'smooth' });
+    const offset = target.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop - 24;
+    scroll.scrollTo({ top: offset, behavior: 'smooth' });
   }
   document.querySelectorAll('.doc-nav-link').forEach(x => x.classList.remove('active'));
   if (el) el.classList.add('active');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function setupDocScroll() {
   const scroll = document.getElementById('doc-scroll');
-  if (!scroll) return;
+  if (!scroll || scroll.dataset.bound) return;
+  scroll.dataset.bound = '1';
+  const sections = ['intro','spectrum','hypo','path','experiments','tenets'];
+
   scroll.addEventListener('scroll', () => {
-    const sections = ['intro','spectrum','hypo','path','experiments','tenets'];
-    let current = 'intro';
-    sections.forEach(secId => {
+    const scrollRect = scroll.getBoundingClientRect();
+    let current = sections[0];
+    for (const secId of sections) {
       const el = document.getElementById('sec-'+secId);
-      if (el && el.offsetTop - 60 <= scroll.scrollTop) current = secId;
-    });
+      if (!el) continue;
+      const top = el.getBoundingClientRect().top - scrollRect.top;
+      if (top <= 80) current = secId;
+    }
     document.querySelectorAll('.doc-nav-link').forEach(x => {
       x.classList.toggle('active', x.dataset.sec === current);
     });
   });
-});
+}
+
+window.addEventListener('load', setupDocScroll);
+document.addEventListener('DOMContentLoaded', setupDocScroll);
 
 rebuildTree();
 buildScenarios();
