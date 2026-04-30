@@ -565,39 +565,43 @@ nav{
 
       <div class="exp-intro">
         <div class="exp-card exp-rec">
-          <div class="exp-num">Experiment 01 · Recommended</div>
+          <div class="exp-num">Experiment 01 · Going in</div>
           <div class="exp-title">Single CTA — clip's episode, always</div>
-          <div class="exp-detail">Do the harder task for the user. One destination, one decision. Cleanest baseline.</div>
+          <div class="exp-detail">Default to the episode the clip is from. One destination, one decision. Cleanest baseline, lowest friction on the feed.</div>
           <div class="exp-visual">
             <div class="exp-visual-phone v-primary">Watch S3E8</div>
           </div>
-          <div class="exp-risk">Users wanting "start from beginning" find their own way. Mitigation: details page is one tap away.</div>
+          <div class="exp-risk">Users wanting to start from beginning find their own way via details page.</div>
         </div>
         <div class="exp-card">
-          <div class="exp-num">Experiment 02</div>
-          <div class="exp-title">Two CTAs — clip primary, start from beginning secondary</div>
-          <div class="exp-detail">Honour both intents. Primary is clip's episode; secondary gives the committed-viewer an explicit path.</div>
+          <div class="exp-num">Experiment 02 · Two CTAs in feed</div>
+          <div class="exp-title">Clip primary, *Start from beginning* secondary</div>
+          <div class="exp-detail">Surface both intents on the feed itself. Primary stays the clip's episode; secondary gives the committed-viewer an explicit path.</div>
           <div class="exp-visual">
             <div class="exp-visual-phone v-primary">Watch S3E8</div>
             <div class="exp-visual-phone v-secondary">Start from S1E1</div>
           </div>
-          <div class="exp-risk">Two decisions. Secondary may bleed clicks from primary without converting to longer sessions.</div>
+          <div class="exp-risk">Adds friction to a feed built for mindless sampling. Two decisions, more cognitive load.</div>
         </div>
         <div class="exp-card">
-          <div class="exp-num">Experiment 03 · CW users only</div>
-          <div class="exp-title">Two CTAs for mid-watch — clip / resume</div>
-          <div class="exp-detail">Restrict the two-CTA pattern to mid-watch users, where both intents are genuinely real.</div>
+          <div class="exp-num">Experiment 03 · Delayed decision</div>
+          <div class="exp-title">Single CTA on feed, choice on the player page</div>
+          <div class="exp-detail">Keep the feed clean — one CTA. Once the user lands on the player, surface "Now Playing: S3E4 / Start from S1E1" as a one-time choice. The friction is moved past the commitment point.</div>
           <div class="exp-visual">
             <div class="exp-visual-phone v-primary">Watch S3E8</div>
-            <div class="exp-visual-phone v-secondary">Resume S2E5</div>
+            <div style="font-family:'DM Mono',monospace;font-size:8px;color:var(--muted2);text-align:center;letter-spacing:.08em;text-transform:uppercase;margin-top:2px;">then on player ↓</div>
+            <div style="display:flex;gap:4px;">
+              <div class="exp-visual-phone v-primary" style="flex:1;">S3 E4</div>
+              <div class="exp-visual-phone v-secondary" style="flex:1;">Start S1 E1</div>
+            </div>
           </div>
-          <div class="exp-risk">Spoiler risk if clip is ahead of CW. Needs P13n guard upstream.</div>
+          <div class="exp-risk">Requires more effort. New surface, new state, new instrumentation. But the feed stays low-friction.</div>
         </div>
       </div>
 
       <div class="callout">
         <div class="callout-title">Sequencing</div>
-        <div class="callout-body">Start with Experiment 1 in Phase 1. Measure retention 30s post-tap, not just tap-through. High tap + fast bounce is the fingerprint of a misleading CTA. Layer Experiments 2 or 3 in Phase 2 based on what Phase 1 signals.</div>
+        <div class="callout-body">Going in with Experiment 1 — single CTA on the feed. Layer Experiment 2 or 3 once we have signal on actual user behaviour. Measure retention 30s post-tap, not just tap-through.</div>
       </div>
     </div>
 
@@ -855,14 +859,14 @@ function decide(s) {
       primary:{label:'Watch S3E8',cls:'p-primary'}, secondary:null,
       trail:[{k:'Parent linkage',v:'Has parent',state:'active'},{k:'Entitlement',v:'Watch freely',state:'active'},{k:'Content type',v:'Show',state:'active'},{k:'Watch state',v:'Never watched',state:'active'}],
       dest:'Episode the clip is from.', destSub:'Experiment 02: also offer "Start from S1E1" as secondary.', live:false,
-      altPrimary:{label:'Watch S3E8',cls:'p-primary'}, altSecondary:{label:'Start from S1E1',cls:'p-secondary'}, altLabel:'Exp 02 — two CTAs'
+      altPrimary:{label:'Watch S3E8',cls:'p-primary'}, altSecondary:{label:'Start from S1E1',cls:'p-secondary'}, altLabel:'Exp 02 — two CTAs in feed'
     };
     if (s.watchState === 'watching') return {
       wayfind:'Show · S3E8', title:'A scene from this show', desc:'Mid-way through the show',
       primary:{label:'Watch S3E8',cls:'p-primary'}, secondary:null,
       trail:[{k:'Parent linkage',v:'Has parent',state:'active'},{k:'Entitlement',v:'Watch freely',state:'active'},{k:'Content type',v:'Show',state:'active'},{k:'Watch state',v:'Mid-watch (CW)',state:'active'}],
-      dest:'Clip\'s episode. Exploration over resumption.', destSub:'Experiment 03: also offer "Resume S2E5" for CW users.', live:false,
-      altPrimary:{label:'Watch S3E8',cls:'p-primary'}, altSecondary:{label:'Resume S2E5',cls:'p-secondary'}, altLabel:'Exp 03 — two CTAs (CW)'
+      dest:'Clip\'s episode. Exploration over resumption.', destSub:'Experiment 03: choice surfaces on the player, not the feed.', live:false,
+      altPrimary:{label:'Watch S3E8',cls:'p-primary'}, altSecondary:{label:'(then on player) S3E4 / Start S1E1',cls:'p-secondary'}, altLabel:'Exp 03 — delayed decision'
     };
     return {
       wayfind:'Show · S3E8', title:'A scene from this show', desc:'You\'ve seen it all',
